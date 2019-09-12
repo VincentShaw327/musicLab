@@ -1,0 +1,26 @@
+.btn {
+    cursor: pointer;
+    display: inline-block;
+    width: 100px;
+    height: 30px;
+    line-height: 30px;
+    user-select: none;
+    text-align: center;
+    border: 1px #a12d21 solid;
+    margin: 2px;
+  }
+
+  .level0::after {
+    content: ".";
+    position: relative;
+    top: 4px;
+    left: -7px;
+  }
+
+  .level2::before {
+    content: ".";
+    position: relative;
+    top: -16px;
+    left: 7px;
+  }
+
