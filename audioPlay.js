@@ -1,3 +1,35 @@
+class Mode extends EventTarget {
+    constructor() {
+        super();
+        let modeList=[
+            '播放器',
+            '振荡器',
+            '钢琴',
+            '吉他',
+            '贝斯',
+        ];
+        let renderMode=()=>{
+            this.container=document.createDocumentFragment();
+            for (let index = 0; index < modeList.length; index++) {
+                let elSpan=document.createElement('span');
+                elSpan.className=`mode-item ${index===0?'active':''}`;
+                elSpan.setAttribute('data-index',index);
+                elSpan.addEventListener('click',e=>this.handleClick(e))
+                this.container.appendChild(elSpan)
+            }
+        }
+        renderMode()
+        console.log(super.valueOf() instanceof Mode,this.container);
+        // return this;
+        // return document.createElement('span')
+    }
+    static handleClick(){
+
+    }
+}
+let we=new Mode();
+console.log('Mode',we )
+
 // 简谱映射
 const VOICE_MAP = {
     // 0: [4, 2300, 329.63, 349.23, 391.99, 440, 493.88],
@@ -45,7 +77,7 @@ class Audio {
         window.addEventListener("keydown", e=>this.handleKeyDown(e));
         window.addEventListener("keyup", e=>this.stopAudio());
         this.InputFile = document.querySelector('#file');
-        this.InputFile.addEventListener("change", e=>this.readFile());
+        this.InputFile&&this.InputFile.addEventListener("change", e=>this.readFile());
 
         this.renderMain();
 
@@ -271,7 +303,7 @@ class Audio {
             canvasCtx.stroke();
         };
         // setTimeout(draw,5000)
-        // draw();
+        draw();
     }
 
     playMusic(arg) {
@@ -321,9 +353,3 @@ class Audio {
 
 const _audio=new Audio
 console.log('_audio',_audio)
-
-
-
-
- 
-
