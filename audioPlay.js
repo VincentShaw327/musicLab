@@ -39,13 +39,7 @@ class Mode extends EventTarget {
 // setTimeout(()=>console.log('mode: ', mode),1000)
 
 
-// 简谱映射
-const VOICE_MAP = {
-    // 0: [4, 2300, 329.63, 349.23, 391.99, 440, 493.88],
-    0: [261.63, 293.67, 329.63, 349.23, 391.99, 440, 493.88],
-    1: [523.25, 587.33, 659.26, 698.46, 783.99, 880, 987.77],
-    2: [1046.5, 1174.66, 1318.51, 1396.92, 1567.98, 1760, 1975.52]
-};
+
 
 // http://95.179.250.197:8140/music/fgxs.mp3
 
@@ -88,12 +82,12 @@ class Audio {
 
         this.renderMain();
 
-        this.renderBtns(0)
-        this.renderBtns(1)
-        this.renderBtns(2)
+        this.renderPiano(0)
+        // this.renderPiano(1)
+        // this.renderPiano(2)
 
         this.aimate()
-        this.renderBtns=this.renderBtns.bind(this)
+        this.renderPiano=this.renderPiano.bind(this)
         this.handleStart=this.handleStart.bind(this)
         this.handleStop=this.handleStop.bind(this)
         this.playAudio=this.playAudio.bind(this)
@@ -155,47 +149,101 @@ class Audio {
         this.renderMode()
     }
 
-    renderBtns(level) {
-        let i = 0;
-        let res = "";
-        while (i < 7) {
-            res += `<span class="btn level${level}" data-index=${i}>${i +
-            1}</span>`; // 用data-属性辅助
-            i++;
-        }
-
-
-
+    renderPiano(level) {
+        let container=document.createDocumentFragment();
         const wrap = document.querySelector("section.control");
-        const container = document.createElement("section");
-        container.className = `container${level}`;
-        // 传入e和level，level指的是低中高音
-        const particalStart = e => this.handleStart(e, level);
-        container.addEventListener("mousedown", e => {
-            particalStart(e);
-            container.addEventListener("mouseout", this.handleStop);
-        });
-        container.addEventListener("mouseup", (e)=>this.handleStop(e));
-        container.innerHTML += res;
-        console.log('render',container,document.body)
+        // 简谱映射
+        const oScales={
+            level1:{
+                name:'level1',
+                arr:[261.63, 293.67, 329.63, 349.23, 391.99, 440, 493.88]
+            },
+            level2:{
+                name:'level2',
+                arr:[523.25, 587.33, 659.26, 698.46, 783.99, 880, 987.77]
+            },
+            level3:{
+                name:'level3',
+                arr:[1046.5, 1174.66, 1318.51, 1396.92, 1567.98, 1760, 1975.52]
+            }
+        }
+        const VOICE_MAP = {
+            // 0: [4, 2300, 329.63, 349.23, 391.99, 440, 493.88],
+            0: [261.63, 293.67, 329.63, 349.23, 391.99, 440, 493.88],
+            1: [523.25, 587.33, 659.26, 698.46, 783.99, 880, 987.77],
+            2: [1046.5, 1174.66, 1318.51, 1396.92, 1567.98, 1760, 1975.52]
+        };
+        const lsScales=Object.values(oScales)
+        // console.log('lsScales: ', lsScales);
+        lsScales.forEach((ele,index)=>{
+            let el_section = document.createElement("section");
+            el_section.className = `container${index}`;
+            ele.arr.forEach((fre,i)=>{
+                let res = "";
+                res += `<span class="btn level${index}" data-index=${i}>${i +
+                    1}</span>`; // 用data-属性辅助
+                    // i++;
+                    // 传入e和level，level指的是低中高音
+                    const particalStart = e => this.handleStart(e, index);
+                    el_section.addEventListener("mousedown", e => {
+                        particalStart(e);
+                        el_section.addEventListener("mouseout", this.handleStop);
+                    });
+                    el_section.addEventListener("mouseup", (e)=>this.handleStop(e));
+                    el_section.innerHTML += res;
+            })
+            // let i = 0;
+            // let res = "";
+            /* while (i < 7) {
+                res += `<span class="btn level${index}" data-index=${i}>${i +
+                1}</span>`; // 用data-属性辅助
+                i++;
+                // 传入e和level，level指的是低中高音
+                const particalStart = e => this.handleStart(e, index);
+                container.addEventListener("mousedown", e => {
+                    particalStart(e);
+                    container.addEventListener("mouseout", this.handleStop);
+                });
+                container.addEventListener("mouseup", (e)=>this.handleStop(e));
+                container.innerHTML += res;
+            } */
+            container.appendChild(el_section);
+        })
+        // console.log('render container',container)
         // document.body.appendChild(container);
         wrap.appendChild(container);
     }
 
     renderMode(){
         let modeList=[
-            '播放器',
-            '振荡器',
-            '钢琴',
-            '吉他',
-            '贝斯',
+            {
+                name:'player',
+                txt:'播放器',
+            },
+            {
+                name:'oscillator',
+                txt:'振荡器',
+            },
+            {
+                name:'piano',
+                txt:'钢琴',
+            },
+            {
+                name:'guitar',
+                txt:'吉他',
+            },
+            {
+                name:'bass',
+                txt:'贝斯',
+            },
         ];
         this.container=document.createDocumentFragment();
         for (let index = 0; index < modeList.length; index++) {
             let elSpan=document.createElement('span');
             elSpan.className=`mode-item ${index===0?'active':''}`;
             elSpan.setAttribute('data-index',index);
-            elSpan.innerText=modeList[index]
+            elSpan.setAttribute('name',modeList[index].name);
+            elSpan.innerText=modeList[index].txt
             elSpan.addEventListener('click',e=>this.handleModeClick(e))
             this.container.appendChild(elSpan)
         }
