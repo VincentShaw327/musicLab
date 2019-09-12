@@ -1,3 +1,4 @@
+
 class Mode extends EventTarget {
     constructor() {
         super();
@@ -8,27 +9,35 @@ class Mode extends EventTarget {
             '吉他',
             '贝斯',
         ];
+        console.log(super.valueOf() instanceof Mode,modeList);
         let renderMode=()=>{
             this.container=document.createDocumentFragment();
             for (let index = 0; index < modeList.length; index++) {
                 let elSpan=document.createElement('span');
                 elSpan.className=`mode-item ${index===0?'active':''}`;
                 elSpan.setAttribute('data-index',index);
+                elSpan.innerText=modeList[index]
                 elSpan.addEventListener('click',e=>this.handleClick(e))
                 this.container.appendChild(elSpan)
+                console.log('elSpan: ', elSpan);
             }
+            
         }
         renderMode()
-        console.log(super.valueOf() instanceof Mode,this.container);
-        // return this;
-        // return document.createElement('span')
     }
-    static handleClick(){
 
+    handleClick({target}){
+        const {
+            dataset: {
+                index
+            }
+        } = target;
+        console.log('index: ', index);
     }
 }
-let we=new Mode();
-console.log('Mode',we )
+// let mode=new Mode();
+// setTimeout(()=>console.log('mode: ', mode),1000)
+
 
 // 简谱映射
 const VOICE_MAP = {
@@ -68,11 +77,9 @@ class Audio {
         this.analyser = this.audioCtx.createAnalyser();
         this.filterNode = this.audioCtx.createBiquadFilter();
 
-        
         this.filterNode.type = "lowpass";
         // this.filterNode.frequency.setValueAtTime(1000, this.audioCtx.currentTime);
         this.filterNode.gain.setValueAtTime(25,this.audioCtx.currentTime);
-
 
         window.addEventListener("keydown", e=>this.handleKeyDown(e));
         window.addEventListener("keyup", e=>this.stopAudio());
@@ -86,12 +93,12 @@ class Audio {
         this.renderBtns(2)
 
         this.aimate()
-
         this.renderBtns=this.renderBtns.bind(this)
         this.handleStart=this.handleStart.bind(this)
         this.handleStop=this.handleStop.bind(this)
         this.playAudio=this.playAudio.bind(this)
         this.stopAudio=this.stopAudio.bind(this)
+        this.renderMode=this.renderMode.bind(this)
     }
 
     readFile(){
@@ -123,17 +130,17 @@ class Audio {
             </header>
             <main>
                 <section class="mode">
-                    <span class="mode-item">播放器</span>
-                    <span class="mode-item">振荡器</span>
-                    <span class="mode-item">钢琴</span>
-                    <span class="mode-item">吉他</span>
+                    
                 </section>
                 <section class="animate"></section>
                 <section class="control"></section>
             </main>
             <footer>this is footer</footer>
         `
-
+        // <span class="mode-item">播放器</span>
+        // <span class="mode-item">振荡器</span>
+        // <span class="mode-item">钢琴</span>
+        // <span class="mode-item">吉他</span>
         // 传入e和level，level指的是低中高音
         // const particalStart = e => this.handleStart(e, level);
         // container.addEventListener("mousedown", e => {
@@ -145,7 +152,7 @@ class Audio {
         console.log('render',container,tempalate)
         // document.body.appendChild(container);
         document.body.innerHTML += tempalate;
-
+        this.renderMode()
     }
 
     renderBtns(level) {
@@ -175,6 +182,27 @@ class Audio {
         wrap.appendChild(container);
     }
 
+    renderMode(){
+        let modeList=[
+            '播放器',
+            '振荡器',
+            '钢琴',
+            '吉他',
+            '贝斯',
+        ];
+        this.container=document.createDocumentFragment();
+        for (let index = 0; index < modeList.length; index++) {
+            let elSpan=document.createElement('span');
+            elSpan.className=`mode-item ${index===0?'active':''}`;
+            elSpan.setAttribute('data-index',index);
+            elSpan.innerText=modeList[index]
+            elSpan.addEventListener('click',e=>this.handleModeClick(e))
+            this.container.appendChild(elSpan)
+        }
+        console.log('this.container: ', this.container);
+        document.querySelector("section.mode").appendChild(this.container)
+    }
+
     handleStart({target}, level) {15
         const {
             dataset: {
@@ -202,6 +230,22 @@ class Audio {
     handleKeyDown(e){
         let keyItem=this.mapKeyCode.find(ele=>ele.keyCode===e.keyCode);
         this.playAudio(keyItem.index,keyItem.level);
+    }
+
+    handleModeClick({target}){
+        const {
+            dataset: {
+                index
+            }
+        } = target;
+        const mlist=document.querySelector("section.mode").children
+        console.log('index: ', index,mlist,Array.from(mlist));
+        
+        mlist.length&&Array.from(mlist).forEach(ele => {
+            let elDataIndex=ele.dataset.index
+            ele.removeAttribute('class')
+            ele.setAttribute('class',`mode-item ${index===elDataIndex?'active':''}`)
+        });
     }
 
     playAudio(index, level) {
