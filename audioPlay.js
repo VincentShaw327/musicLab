@@ -65,7 +65,22 @@ class Audio {
             { name:'T',keyCode:84,level:2,index:0 },
           
           
-        ],
+        ];
+        // 简谱映射
+        this.oScales={
+            0:{
+                name:'level1',
+                arr:[261.63, 293.67, 329.63, 349.23, 391.99, 440, 493.88]
+            },
+            1:{
+                name:'level2',
+                arr:[523.25, 587.33, 659.26, 698.46, 783.99, 880, 987.77]
+            },
+            2:{
+                name:'level3',
+                arr:[1046.5, 1174.66, 1318.51, 1396.92, 1567.98, 1760, 1975.52]
+            }
+        }
         // 创建音频上下文
         this.audioCtx = new AudioContext();
         this.analyser = this.audioCtx.createAnalyser();
@@ -77,12 +92,11 @@ class Audio {
 
         window.addEventListener("keydown", e=>this.handleKeyDown(e));
         window.addEventListener("keyup", e=>this.stopAudio());
-        this.InputFile = document.querySelector('#file');
-        this.InputFile&&this.InputFile.addEventListener("change", e=>this.readFile());
 
         this.renderMain();
 
-        this.renderPiano(0)
+        // this.renderPiano();
+        this.renderPlayer()
         // this.renderPiano(1)
         // this.renderPiano(2)
 
@@ -90,15 +104,14 @@ class Audio {
         this.renderPiano=this.renderPiano.bind(this)
         this.handleStart=this.handleStart.bind(this)
         this.handleStop=this.handleStop.bind(this)
-        this.playAudio=this.playAudio.bind(this)
-        this.stopAudio=this.stopAudio.bind(this)
+        this.pianoPlay=this.pianoPlay.bind(this)
+        // this.stopAudio=this.stopAudio.bind(this)
         this.renderMode=this.renderMode.bind(this)
     }
 
-    readFile(){
-        console.log('file',this.InputFile.files)
-        let  elInputFil=this.InputFile
-        if(elInputFil.files.length!==0){
+    readFile({target}){
+        const {files}=target
+        if(files&&files.length!==0){
             var fr = new FileReader();
             fr.onload = (e)=>{
                 var fileResult = e.target.result;
@@ -110,7 +123,7 @@ class Audio {
                     alert("文件解码失败")
                 })
             }
-            fr.readAsArrayBuffer(elInputFil.files[0]);
+            fr.readAsArrayBuffer(files[0]);
         }
     }
 
@@ -129,7 +142,7 @@ class Audio {
                 <section class="animate"></section>
                 <section class="control"></section>
             </main>
-            <footer>this is footer</footer>
+            <footer>shaw's music Lab</footer>
         `
         // <span class="mode-item">播放器</span>
         // <span class="mode-item">振荡器</span>
@@ -147,71 +160,6 @@ class Audio {
         // document.body.appendChild(container);
         document.body.innerHTML += tempalate;
         this.renderMode()
-    }
-
-    renderPiano(level) {
-        let container=document.createDocumentFragment();
-        const wrap = document.querySelector("section.control");
-        // 简谱映射
-        const oScales={
-            level1:{
-                name:'level1',
-                arr:[261.63, 293.67, 329.63, 349.23, 391.99, 440, 493.88]
-            },
-            level2:{
-                name:'level2',
-                arr:[523.25, 587.33, 659.26, 698.46, 783.99, 880, 987.77]
-            },
-            level3:{
-                name:'level3',
-                arr:[1046.5, 1174.66, 1318.51, 1396.92, 1567.98, 1760, 1975.52]
-            }
-        }
-        const VOICE_MAP = {
-            // 0: [4, 2300, 329.63, 349.23, 391.99, 440, 493.88],
-            0: [261.63, 293.67, 329.63, 349.23, 391.99, 440, 493.88],
-            1: [523.25, 587.33, 659.26, 698.46, 783.99, 880, 987.77],
-            2: [1046.5, 1174.66, 1318.51, 1396.92, 1567.98, 1760, 1975.52]
-        };
-        const lsScales=Object.values(oScales)
-        // console.log('lsScales: ', lsScales);
-        lsScales.forEach((ele,index)=>{
-            let el_section = document.createElement("section");
-            el_section.className = `container${index}`;
-            ele.arr.forEach((fre,i)=>{
-                let res = "";
-                res += `<span class="btn level${index}" data-index=${i}>${i +
-                    1}</span>`; // 用data-属性辅助
-                    // i++;
-                    // 传入e和level，level指的是低中高音
-                    const particalStart = e => this.handleStart(e, index);
-                    el_section.addEventListener("mousedown", e => {
-                        particalStart(e);
-                        el_section.addEventListener("mouseout", this.handleStop);
-                    });
-                    el_section.addEventListener("mouseup", (e)=>this.handleStop(e));
-                    el_section.innerHTML += res;
-            })
-            // let i = 0;
-            // let res = "";
-            /* while (i < 7) {
-                res += `<span class="btn level${index}" data-index=${i}>${i +
-                1}</span>`; // 用data-属性辅助
-                i++;
-                // 传入e和level，level指的是低中高音
-                const particalStart = e => this.handleStart(e, index);
-                container.addEventListener("mousedown", e => {
-                    particalStart(e);
-                    container.addEventListener("mouseout", this.handleStop);
-                });
-                container.addEventListener("mouseup", (e)=>this.handleStop(e));
-                container.innerHTML += res;
-            } */
-            container.appendChild(el_section);
-        })
-        // console.log('render container',container)
-        // document.body.appendChild(container);
-        wrap.appendChild(container);
     }
 
     renderMode(){
@@ -251,7 +199,54 @@ class Audio {
         document.querySelector("section.mode").appendChild(this.container)
     }
 
-    handleStart({target}, level) {15
+    renderPlayer(){
+        const wrap = document.querySelector("section.control");
+        //<input id="file" type="file"/>
+        let container=document.createDocumentFragment();
+        let elInput=document.createElement('input');
+        elInput.setAttribute('id','file');
+        elInput.setAttribute('type','file');
+        // this.InputFile = document.querySelector('#file');
+        elInput.addEventListener("change", e=>this.readFile(e));
+        this.$player=elInput;
+        wrap.appendChild(elInput);
+    }
+
+    renderPiano(level) {
+        let container=document.createDocumentFragment();
+        const wrap = document.querySelector("section.control");
+        const VOICE_MAP = {
+            // 0: [4, 2300, 329.63, 349.23, 391.99, 440, 493.88],
+            0: [261.63, 293.67, 329.63, 349.23, 391.99, 440, 493.88],
+            1: [523.25, 587.33, 659.26, 698.46, 783.99, 880, 987.77],
+            2: [1046.5, 1174.66, 1318.51, 1396.92, 1567.98, 1760, 1975.52]
+        };
+        const lsScales=Object.values(this.oScales)
+        // console.log('lsScales: ', lsScales);
+        lsScales.forEach((ele,index)=>{
+            let res = "";
+            let el_section = document.createElement("section");
+            el_section.className = `container${index}`;
+            //创建按钮
+            ele.arr.forEach((fre,i)=>res += `<span class="btn level${index}" data-index=${i}>${i +1}</span>`)
+            const particalStart = e => this.handleStart(e, index);
+            el_section.addEventListener("mousedown", e => {
+                particalStart(e);
+                el_section.addEventListener("mouseout", (e)=>this.handleStop(e));
+            });
+            el_section.addEventListener("mouseup", (e)=>this.handleStop(e));
+            el_section.innerHTML += res;
+            container.appendChild(el_section);
+        })
+        // console.log('render container',container)
+        // document.body.appendChild(container);
+        wrap.appendChild(container);
+        this.$piano=container;
+    }
+
+
+
+    handleStart({target}, level) {
         const {
             dataset: {
                 index
@@ -259,7 +254,7 @@ class Audio {
         } = target;
         if (index !== undefined) {
             console.log(index,this, "start");
-            this.playAudio( index, level); // 后面加上playAudio的实现
+            this.pianoPlay( index, level); // 后面加上pianoPlay的实现
         }
     }
 
@@ -272,12 +267,19 @@ class Audio {
         if (index !== undefined) {
             console.log( "stop",this,index,);
         }
-        this.stopAudio(); // 后面加上stopAudio的实现
+        this.gainNode &&
+        this.gainNode.gain.exponentialRampToValueAtTime(
+            0.001,
+            this.audioCtx.currentTime + 0.8
+        );
+        // 0.8秒内停止声音
+        this.oscillator && this.oscillator.stop(this.audioCtx.currentTime + 0.8);
+        this.oscillator = this.gainNode = null;
     }
 
     handleKeyDown(e){
         let keyItem=this.mapKeyCode.find(ele=>ele.keyCode===e.keyCode);
-        this.playAudio(keyItem.index,keyItem.level);
+        this.pianoPlay(keyItem.index,keyItem.level);
     }
 
     handleModeClick({target}){
@@ -287,7 +289,7 @@ class Audio {
             }
         } = target;
         const mlist=document.querySelector("section.mode").children
-        console.log('index: ', index,mlist,Array.from(mlist));
+        console.log('index: ',target, index,mlist,Array.from(mlist));
         
         mlist.length&&Array.from(mlist).forEach(ele => {
             let elDataIndex=ele.dataset.index
@@ -296,7 +298,8 @@ class Audio {
         });
     }
 
-    playAudio(index, level) {
+    pianoPlay(index, level) {
+        console.log('index, level: ', index, level);
         // 如果之前正在播，那就清掉之前的音频
         this.gainNode &&
             this.gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
@@ -319,7 +322,7 @@ class Audio {
         // "sine", "square", "sawtooth", "triangle" and "custom". 默认值是"sine"
         this.oscillator.type = "sine";
         // 设置音调频率
-        this.oscillator.frequency.value = VOICE_MAP[level][index]; // 读取相应的简谱频率
+        this.oscillator.frequency.value = this.oScales[level].arr[index]; // 读取相应的简谱频率
         // 先把当前音量设为0
         this.gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
         // 0.01秒时间内音量从刚刚的0变成1，线性变化
@@ -329,17 +332,6 @@ class Audio {
         );
         // 声音开始
         this.oscillator.start(this.audioCtx.currentTime);
-    }
-
-    stopAudio() {
-        this.gainNode &&
-            this.gainNode.gain.exponentialRampToValueAtTime(
-                0.001,
-                this.audioCtx.currentTime + 0.8
-            );
-        // 0.8秒内停止声音
-        this.oscillator && this.oscillator.stop(this.audioCtx.currentTime + 0.8);
-        this.oscillator = this.gainNode = null;
     }
 
     aimate=()=> {
