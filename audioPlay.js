@@ -209,6 +209,7 @@ class Audio {
         // this.InputFile = document.querySelector('#file');
         elInput.addEventListener("change", e=>this.readFile(e));
         this.$player=elInput;
+        wrap.innerHTML='';
         wrap.appendChild(elInput);
     }
 
@@ -240,10 +241,23 @@ class Audio {
         })
         // console.log('render container',container)
         // document.body.appendChild(container);
+        wrap.innerHTML='';
         wrap.appendChild(container);
         this.$piano=container;
     }
 
+    renderOscillator(){
+        let container=document.createDocumentFragment();
+        const wrap = document.querySelector("section.control");
+        const tempalate=`
+            <section>"振荡器"</section>
+        `
+
+        container.innerHTML=tempalate;
+        wrap.innerHTML='';
+        wrap.innerHTML=tempalate
+        this.$oscillator=container;
+    }
 
 
     handleStart({target}, level) {
@@ -288,9 +302,27 @@ class Audio {
                 index
             }
         } = target;
-        const mlist=document.querySelector("section.mode").children
+        const elMode=document.querySelector("section.mode");
+        const mlist=elMode.children;
+        const attrName=target.getAttribute('name')
+        console.log('attrName: ', attrName,target);
         console.log('index: ',target, index,mlist,Array.from(mlist));
-        
+        switch (attrName) {
+            case 'player':
+                this.renderPlayer();
+                break;
+            case 'oscillator':
+                this.renderOscillator();
+                break;
+            case 'piano':
+                this.renderPiano();
+                break;
+            case 'guitar':
+            case 'bass':
+                // break;
+            default:
+                break;
+        }
         mlist.length&&Array.from(mlist).forEach(ele => {
             let elDataIndex=ele.dataset.index
             ele.removeAttribute('class')
