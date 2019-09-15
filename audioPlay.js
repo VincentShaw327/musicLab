@@ -90,8 +90,8 @@ class Audio {
         // this.filterNode.frequency.setValueAtTime(1000, this.audioCtx.currentTime);
         this.filterNode.gain.setValueAtTime(25,this.audioCtx.currentTime);
 
-        window.addEventListener("keydown", e=>this.handleKeyDown(e));
-        window.addEventListener("keyup", e=>this.stopAudio());
+        // window.addEventListener("keydown", e=>this.handleKeyDown(e));
+        // window.addEventListener("keyup", e=>this.stopAudio());
 
         this.renderMain();
 
@@ -250,13 +250,78 @@ class Audio {
         let container=document.createDocumentFragment();
         const wrap = document.querySelector("section.control");
         const tempalate=`
-            <section>"振荡器"</section>
-        `
+            <section class="oscillator">
+                <div>频率：<input type="number" id="freq"  value="25"/></div>
+                <div>音高微调：<input type="number" id="detune" value="25" /></div></div>
+                <div>波形：
+                    <select name="waveform" id="waveform">
+                        <option value="sine">sine</option>
+                        <option value="square">方波</option>
+                        <option value="sawtooth">锯齿波</option>
+                        <option value="triangle">三角波</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+                <button id="start">开始</button>
+                <button id="stop">暂停</button>
+            </section>
+        `;
+        this.createOsc();
+        let oToSetOSI={};
 
         container.innerHTML=tempalate;
         wrap.innerHTML='';
         wrap.innerHTML=tempalate
         this.$oscillator=container;
+        const elFreq = document.querySelector("input#freq");
+        const elDetune = document.querySelector("input#detune");
+        const waveform = document.querySelector("select#waveform");
+        // this.freqValue='';
+        // console.log('elFreq: ', elFreq.value);
+        elFreq.addEventListener('change',e=>{
+            // oToSetOSI.freq=e.target.value
+            this.oscillator.frequency.value=e.target.value
+        });
+        elDetune.addEventListener('change',e=>{
+            oToSetOSI.detune=e.target.value;
+            this.oscillator.detune.value = oToSetOSI.detune||25; // 读取相应的简谱频率
+        });
+        waveform.addEventListener('change',e=>{
+            oToSetOSI.type=e.target.value
+            this.oscillator.type = oToSetOSI.type||"sine";
+        });
+        // console.log('elDetune: ', elDetune.value);
+        // console.log('waveform: ', waveform.value);
+        // let oToSetOSI={
+        //     freq:elFreq.value,
+        //     type:waveform.value,
+        //     detune:parseInt(elDetune.value,10)
+        // }
+        this.oscillator.type = oToSetOSI.type||"sine";
+        // 设置音调频率
+        this.oscillator.frequency.value = oToSetOSI.freq||25; // 读取相应的简谱频率
+        this.oscillator.detune.value = oToSetOSI.detune||25; // 读取相应的简谱频率
+        // 先把当前音量设为0
+        this.gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
+        // 0.01秒时间内音量从刚刚的0变成1，线性变化
+        this.gainNode.gain.linearRampToValueAtTime(
+            1,
+            this.audioCtx.currentTime + 0.01
+        );
+        // 声音开始
+        
+
+        const btnStart = document.querySelector("button#start");
+        const btnStop = document.querySelector("button#stop");
+        // btnStart.addEventListener('click',(e)=>this.playOscillator(oToSetOSI))
+        btnStart.addEventListener('click',(e)=>{
+            if(this.oscillator==null){
+                this.createOsc();
+                console.log('this.audioCtx',this.audioCtx)
+            }
+            this.oscillator.start(this.audioCtx.currentTime)
+        })
+        btnStop.addEventListener('click',(e)=>this.handleStop(e))
     }
 
 
@@ -420,6 +485,54 @@ class Audio {
         };
         // setTimeout(draw,5000)
         draw();
+    }
+
+    playOscillator({freq,type,detune}){
+        console.log('toplay Oscillator',freq,type,detune)
+        this.gainNode &&
+            this.gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
+        // this.oscillator && this.oscillator.stop(this.audioCtx.currentTime + 1);
+        // 创建音调控制对象
+        this.oscillator = this.audioCtx.createOscillator();
+        // 创建音量控制对象
+        this.gainNode = this.audioCtx.createGain();
+        
+        this.oscillator.connect(this.gainNode);
+        this.gainNode.connect(this.filterNode);
+        this.filterNode.connect(this.analyser)
+        // 音量和设备关联
+        this.analyser.connect(this.audioCtx.destination);
+        // 音调音量关联
+        // this.oscillator.connect(this.gainNode);
+        // 音量和设备关联
+        // this.gainNode.connect(this.audioCtx.destination);
+        // 音调类型指定为正弦波。sin好听一些
+        // "sine", "square", "sawtooth", "triangle" and "custom". 默认值是"sine"
+        this.oscillator.type = type||"sine";
+        // 设置音调频率
+        this.oscillator.frequency.value = freq||25; // 读取相应的简谱频率
+        this.oscillator.detune.value = detune||25; // 读取相应的简谱频率
+        // 先把当前音量设为0
+        this.gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
+        // 0.01秒时间内音量从刚刚的0变成1，线性变化
+        this.gainNode.gain.linearRampToValueAtTime(
+            5,
+            this.audioCtx.currentTime + 0.01
+        );
+        // 声音开始
+        this.oscillator.start(this.audioCtx.currentTime);
+    }
+
+    createOsc(){
+        // 创建音调控制对象
+        this.oscillator = this.audioCtx.createOscillator();
+        // 创建音量控制对象
+        this.gainNode = this.audioCtx.createGain();
+        this.oscillator.connect(this.gainNode);
+        this.gainNode.connect(this.filterNode);
+        this.filterNode.connect(this.analyser)
+        // 音量和设备关联
+        this.analyser.connect(this.audioCtx.destination);
     }
 
     playMusic(arg) {
