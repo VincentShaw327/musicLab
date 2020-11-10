@@ -279,7 +279,7 @@ class Audio {
         // this.freqValue='';
         // console.log('elFreq: ', elFreq.value);
         elFreq.addEventListener('change',e=>{
-            // oToSetOSI.freq=e.target.value
+            oToSetOSI.freq=e.target.value
             this.oscillator.frequency.value=e.target.value
         });
         elDetune.addEventListener('change',e=>{
@@ -297,17 +297,17 @@ class Audio {
         //     type:waveform.value,
         //     detune:parseInt(elDetune.value,10)
         // }
-        this.oscillator.type = oToSetOSI.type||"sine";
+        // this.oscillator.type = oToSetOSI.type||"sine";
         // 设置音调频率
-        this.oscillator.frequency.value = oToSetOSI.freq||25; // 读取相应的简谱频率
-        this.oscillator.detune.value = oToSetOSI.detune||25; // 读取相应的简谱频率
+        // this.oscillator.frequency.value = oToSetOSI.freq||25; // 读取相应的简谱频率
+        // this.oscillator.detune.value = oToSetOSI.detune||25; // 读取相应的简谱频率
         // 先把当前音量设为0
-        this.gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
+        // this.gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
         // 0.01秒时间内音量从刚刚的0变成1，线性变化
-        this.gainNode.gain.linearRampToValueAtTime(
-            1,
-            this.audioCtx.currentTime + 0.01
-        );
+        // this.gainNode.gain.linearRampToValueAtTime(
+        //     1,
+        //     this.audioCtx.currentTime + 0.01
+        // );
         // 声音开始
         
 
@@ -316,12 +316,27 @@ class Audio {
         // btnStart.addEventListener('click',(e)=>this.playOscillator(oToSetOSI))
         btnStart.addEventListener('click',(e)=>{
             if(this.oscillator==null){
+                // playPiano()
                 this.createOsc();
                 console.log('this.audioCtx',this.audioCtx)
             }
             this.oscillator.start(this.audioCtx.currentTime)
         })
-        btnStop.addEventListener('click',(e)=>this.handleStop(e))
+        btnStop.addEventListener('click',(e)=>this.handleStop(e));
+
+
+
+        const playPiano=()=>{
+            let bufferSource = this.audioCtx.createBufferSource();
+            bufferSource.buffer = './media/piano.wav';
+            console.log('bufferSource: ', bufferSource);
+            // 音源再生速度の比率変更で、音源の高さを調整
+            bufferSource.playbackRate.value = oToSetOSI.freq;
+            bufferSource.connect(this.audioCtx.destination);
+            bufferSource.start(0);
+
+        }
+
     }
 
 
